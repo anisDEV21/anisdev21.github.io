@@ -1,10 +1,620 @@
-<html>
+<!DOCTYPE html>
+<html lang="fr">
 <head>
-  
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Facture SOLUTION MAXI </title>
+    <!-- Chargement de Tailwind CSS --><script src="chch.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Styles de base pour l'écran */
+        body { font-family: 'Inter', Calibri, Arial, sans-serif; background-color: #f4f7f9; font-size: 14px; }
+        .invoice-container { 
+            max-width: 210mm;
+            width: 100%;
+            margin: 0 auto;
+            /* MIN-HEIGHT A ÉTÉ DÉPLACÉ DANS LE MEDIA PRINT */
+        }
+        
+        /* Ensure content fits within printable area */
+        @page {
+            margin: 1cm;
+        }
+        .invoice-header { border-bottom: 3px solid #f05a28; padding-bottom: 1rem; }
+        
+        /* Styles des inputs interactifs (Écran) */
+        .item-input, .text-input {
+            appearance: none;
+            -moz-appearance: textfield;
+            border: 1px solid #d1d5db; /* Bordure visible pour l'édition */
+            padding: 4px;
+            width: 100%;
+            background-color: #ffffff;
+        }
+        .item-input { text-align: right; }
+        .text-input:focus, .item-input:focus {
+            outline: 1px solid #004a80;
+            border-color: #004a80;
+            background-color: #e6f0ff;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+        /* Styles de la table pour un rendu d'impression plus net */
+        #invoice_table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            page-break-inside: auto;
+            margin: 0;
+            padding: 0;
+        }
+        #invoice_table tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        #invoice_table th {
+            background-color: #e5e7eb !important;
+            color: #1f2937 !important;
+            border: 1px solid #d1d5db;
+            padding: 4px;
+            font-size: 10pt;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+        #invoice_table td {
+            border: 1px solid #e5e7eb;
+            padding: 4px;
+            font-size: 10pt;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-all;
+            white-space: normal;
+            min-height: 24px;
+            height: auto;
+        }
+        /* Column width management */
+        #invoice_table th:nth-child(1), #invoice_table td:nth-child(1) { /* Designation column */
+            width: 50%;
+            max-width: none;
+            text-align: left;
+        }
+        #invoice_table th:nth-child(2), #invoice_table td:nth-child(2) { /* Quantity column */
+            width: 15%;
+            max-width: none;
+            text-align: center;
+        }
+        #invoice_table th:nth-child(3), #invoice_table td:nth-child(3) { /* Unit price column */
+            width: 15%;
+            max-width: none;
+            text-align: right;
+        }
+        #invoice_table th:nth-child(4), #invoice_table td:nth-child(4) { /* Total column */
+            width: 20%;
+            max-width: none;
+            text-align: right;
+        }
+
+        @media print {
+            #invoice_table td, #invoice_table th {
+                font-size: 9pt !important;
+                padding: 2px 4px !important;
+                line-height: 1.2 !important;
+            }
+            #invoice_table td:nth-child(1) {
+                font-size: 9pt !important;
+                word-break: break-all !important;
+                white-space: normal !important;
+                overflow: visible !important;
+                min-height: auto !important;
+            }
+            table {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+        }
+
+        /* Réduction de l'espacement des totaux */
+        .summary-row {
+            padding-top: 4px;
+            padding-bottom: 4px;
+        }
+        .summary-row-ttc {
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+
+
+        /* Styles spécifiques pour l'impression (mode noir et blanc, 11pt, masquage des éléments interactifs) */
+        @media print {
+            /* Styles généraux du document */
+            @page {
+                size: A4;
+                margin: 0.5cm;
+            }
+            body { 
+                background-color: white !important;
+                font-size: 11pt !important;
+                font-family: Calibri, Arial, sans-serif !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .invoice-container {
+                width: 100% !important;
+                max-width: none !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0.5cm !important;
+                margin: 0 !important;
+                display: block !important;
+                page-break-after: always;
+            }
+
+            /* MASQUER TOUT CE QUI EST INTERACTIF/NON-FINAL */
+            .no-print, #item_list .no-print {
+                display: none !important;
+            }
+            /* Rendre les inputs transparents et statiques */
+            .text-input, .item-input {
+                border: none !important;
+                background-color: transparent !important;
+                padding: 0 !important;
+                display: inline-block;
+                width: auto !important;
+            }
+            .text-input { text-align: left !important; }
+
+            /* GESTION DES COULEURS POUR LE NOIR ET BLANC */
+            .invoice-header { border-bottom: 3px solid black !important; }
+            #total_ttc_box { background-color: #cccccc !important; color: black !important; border: 1px solid black !important; }
+            .bg-gray-100 { background-color: #f0f0f0 !important; }
+            .text-orange { color: black !important; }
+            .text-blue { color: #333333 !important; }
+            
+            /* S'assurer que les valeurs calculées restent affichées */
+            #invoice_table td span { display: block !important; }
+
+            /* Réduction de l'espacement pour l'impression */
+            #invoice_table td, #invoice_table th {
+                padding-top: 2px !important;
+                padding-bottom: 2px !important;
+            }
+            .summary-row, .summary-row-ttc {
+                padding-top: 2px !important;
+                padding-bottom: 2px !important;
+            }
+            .summary-row-ttc {
+                padding-top: 4px !important;
+                padding-bottom: 4px !important;
+            }
+            
+            /* S'assurer que le pied de page est poussé au fond (important pour le flexbox) */
+            #invoice-footer {
+                margin-top: auto !important; /* Pousse le footer vers le bas */
+            }
+
+        }
+    </style>
 </head>
+<body class="p-4 sm:p-8">
 
-  <body>
+    <!-- Le conteneur parent 'invoice-container' est maintenant un flexbox en mode print -->
+    <div id="app" class="invoice-container bg-white shadow-xl mx-auto p-6 md:p-10 rounded-lg">
 
-    <h1>  راني نخدم فيه عادا</h1>
-  </body>
+        <!-- L'en-tête de la Facture -->
+        <header class="invoice-header flex flex-col sm:flex-row justify-between items-start mb-6">
+            <!-- Informations du Vendeur (SOLUTION MAXI) - Toujours à gauche -->
+            <div class="w-full sm:w-1/2 mb-4 sm:mb-0 text-sm">
+                <h1 class="text-xl font-bold text-[#f05a28] mb-2">SOLUTION MAXI</h1>
+                <p class="text-xs text-gray-700">7 lots CFPA 21003 - EL HARROUCH Skikda (DZ) Algérie</p>
+                <p class="text-xs text-gray-700">RC : 06A0738153 | NIF : 18074010278195</p>
+                <p class="text-xs text-gray-700">NIS : 19802401057835 | A.I : 23235186571</p>
+            </div>
+
+            <!-- Bloc du Logo (Maintenant à droite) -->
+            <div class="w-full sm:w-1/2 text-left sm:text-right text-sm">
+                <!-- URL d'image de placeholder pour éviter une erreur 404 si logo.jpg n'existe pas -->
+                <img src="https://placehold.co/240x60/f05a28/ffffff?text=SOLUTION+MAXI" 
+                     alt="SOLUTION MAXI Logo" 
+                     class="w-60 h-auto ml-auto"
+                     onerror="this.onerror=null;this.src='https://placehold.co/240x60/004a80/ffffff?text=SOLUTION+MAXI+LOGO';"> 
+            </div>
+        </header>
+
+        <!-- NOUVEAU BLOC: TITRE DE LA FACTURE (Centré) -->
+        <div class="text-center mb-6">
+            <h2 class="text-2xl font-extrabold text-[#004a80] uppercase">
+                <span id="invoice_number_display">FACTURE PROFORMA N°: 2024/FAC00001</span>
+                <input type="hidden" id="invoice_number_value" value="00001">
+            </h2>
+        </div>
+        
+        <!-- Infos Client et Agence Commerciale (SOUS le titre) -->
+        <div class="mb-4 text-sm flex justify-between items-start">
+            
+            <!-- Partie Gauche (Client) - Élargie à 2/3 -->
+            <div class="w-2/3 text-left">
+                <!-- Bloc "Doit à" (Client) en haut à gauche -->
+                <div class="mb-2">
+                    <p class="text-sm font-semibold">
+                        Doit à: <input type="text" class="text-input inline w-full font-extrabold text-left" id="client_name" placeholder="Nom du Client">
+                    </p>
+                </div>
+                <div class="text-xs text-gray-700 leading-tight">
+                    <input type="text" class="text-input text-left font-medium" id="agency_address" placeholder="Adresse du Client">
+                    <input type="text" class="text-input text-left" id="agency_rc" placeholder="RC / Agrément">
+                    <input type="text" class="text-input text-left" id="agency_art_fisc" placeholder="Article Fiscal">
+                    <input type="text" class="text-input text-left" id="agency_id_fisc" placeholder="Identification Fiscale">
+                </div>
+            </div>
+
+            <!-- Partie Droite (Infos Date/Ref) - Réduite à 1/3 -->
+            <div class="w-1/3 text-right pt-2">
+                <!-- Date alignée à droite sous le titre central -->
+                <p class="text-sm font-semibold mb-2">
+                    Le: <input type="date" class="text-input inline w-36 font-medium text-right" id="invoice_date" value="2024-01-02">
+                </p>
+            </div>
+        </div>
+
+        <!-- Tableau des Articles -->
+        <div class="overflow-x-auto shadow-md rounded-lg">
+            <table id="invoice_table" class="min-w-full text-xs">
+                <thead class="bg-gray-100 text-gray-600 uppercase tracking-wider">
+                    <tr>
+                        <th class="py-1 px-2 text-left">Désignation</th>
+                        <th class="py-1 px-2 text-right w-20">Quantité</th>
+                        <th class="py-1 px-2 text-right w-28">Prix U HT (DA)</th>
+                        <th class="py-1 px-2 text-right w-28">Montant HT (DA)</th>
+                        <th class="py-1 px-2 text-center w-8 no-print"></th>
+                    </tr>
+                </thead>
+                <tbody id="item_list" class="bg-white divide-y divide-gray-200">
+                    <!-- Les lignes seront insérées ici par JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Boutons interactifs (Masqués à l'impression) -->
+        <div class="mt-4 flex justify-between items-center no-print">
+            <button onclick="addItem()" class="bg-[#004a80] hover:bg-[#003c66] text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md">
+                + Ajouter une ligne
+            </button>
+            <button onclick="window.print()" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m0 2h10m-10 0l-2 3m2-3l2 3m7-3l2 3m-2-3l-2 3M7 17h10"></path></svg>
+                Imprimer / Créer PDF
+            </button>
+        </div>
+
+
+        <!-- Résumé des Totaux et Total Général (Espacement réduit) -->
+        <div class="flex justify-end mt-8">
+            <div class="w-full sm:w-96">
+                <div class="space-y-1 text-sm">
+                    <!-- Total HT -->
+                    <div class="flex justify-between items-center summary-row px-3 bg-gray-100 rounded-md">
+                        <span class="font-medium text-gray-700">Total HT</span>
+                        <span id="total_ht" class="font-bold text-gray-900">0,00 DA</span>
+                    </div>
+                    <!-- Total Taxes -->
+                    <div class="flex justify-between items-center summary-row px-3 bg-gray-100 rounded-md">
+                        <span class="font-medium text-gray-700">TVA (19%)</span>
+                        <span id="total_taxes" class="font-bold text-gray-900">0,00 DA</span>
+                    </div>
+                    <!-- Total TTC -->
+                    <div class="flex justify-between items-center summary-row-ttc px-3 bg-[#f05a28] text-white rounded-md shadow-lg" id="total_ttc_box">
+                        <span class="text-base font-bold">Total TTC</span>
+                        <span id="total_ttc" class="text-base font-extrabold">0,00 DA</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Montant en lettres -->
+        <p class="mt-8 text-sm font-semibold text-gray-800 border-t pt-4">
+            Arrêtée la présente facture proforma à la somme de: <span id="amount_in_words" class="text-[#004a80] font-extrabold">ZÉRO DINARS ALGÉRIENS EN TTC.</span>
+        </p>
+        
+        <!-- Signature Placeholder -->
+        <div class="mt-12 text-right">
+            <p class="text-sm font-semibold">Le gérant,</p>
+            <div class="mt-8 h-20">
+                <!-- Espace pour le cachet/signature à l'impression -->
+            </div>
+        </div>
+
+
+        <!-- Pied de page - AJOUT DE L'ID pour le ciblage CSS d'impression -->
+        <footer id="invoice-footer" class="mt-12 text-center text-xs text-gray-500 pt-4 border-t border-gray-300">
+            <p>Mobile: 0550 36 30 36 - 0550 36 20 36 | Courriel: solutionmaxi@gmail.com | Site: www.solutionmaxi.com</p>
+            <p class="mt-1">N° Cpt bancaire : 00300748102504300059 BADR AGENCE EL HARROUCH</p>
+            <p class="mt-2 text-xs">Pour toutes informations, n'hésitez pas de nous contacter.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        // --- Conversion en Lettres (Fonction plus complète) ---
+        const numberToWordsFR = (n) => {
+            const units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf'];
+            const teens = ['dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+            const tens = ['', '', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante', 'soixante-dix', 'quatre-vingt', 'quatre-vingt-dix'];
+
+            const convertGroup = (num) => {
+                let s = '';
+                const h = Math.floor(num / 100);
+                const t = num % 100;
+
+                if (h > 0) {
+                    s += (h === 1 ? 'cent' : units[h] + ' cent');
+                    if (t > 0) s += ' ';
+                    if (h > 1 && t === 0) s += 's'; 
+                }
+
+                if (t > 0) {
+                    if (t < 10) {
+                        s += units[t];
+                    } else if (t < 20) {
+                        s += teens[t - 10];
+                    } else {
+                        const tu = t % 10;
+                        const td = Math.floor(t / 10);
+                        s += tens[td];
+                        if (tu > 0) {
+                            if (td === 7 || td === 9) { 
+                                s += '-';
+                                s += teens[tu];
+                            } else {
+                                s += (tu === 1 && td !== 8 ? '-et-' : '-') + units[tu];
+                            }
+                        } else if (td === 8 && tu === 0) { 
+                            s += 's';
+                        } else if (tu > 0) {
+                            s += '-' + units[tu];
+                        }
+                    }
+                }
+                return s.trim().replace(/ /g, '-').replace(/--/g, '-'); 
+            };
+
+            if (n === 0) return "Zéro";
+
+            const num = Math.round(n * 100) / 100;
+
+            const integerPart = Math.floor(num);
+            const strN = integerPart.toString();
+            const groups = [];
+            for (let i = strN.length; i > 0; i -= 3) {
+                groups.push(parseInt(strN.substring(Math.max(0, i - 3), i)));
+            }
+            
+            const suffixes = ['', 'mille', 'million', 'milliard'];
+            let result = '';
+
+            for (let i = 0; i < groups.length; i++) {
+                let groupWords = convertGroup(groups[i]);
+                if (groupWords) {
+                    if (i === 1) { 
+                        groupWords = (groups[i] === 1 ? '' : groupWords) + ' mille';
+                    } else if (i === 2) { 
+                        groupWords += (groups[i] > 1 ? ' millions' : ' million');
+                    } else if (i === 3) { 
+                        groupWords += (groups[i] > 1 ? ' milliards' : ' milliard');
+                    }
+                    result = groupWords + (result ? ' ' + result : '');
+                }
+            }
+
+            const decimals = Math.round((num - integerPart) * 100);
+            const wordsDecimals = decimals > 0 ? ' et ' + convertGroup(decimals) + ' centimes' : '';
+
+            return (result.replace(/-/g, ' ') + ' Dinars Algériens' + wordsDecimals).trim().replace(/ un mille/g, ' mille').toUpperCase();
+        };
+
+
+        // Taux de TVA fixe puisque la colonne taxe est retirée du tableau
+        const GLOBAL_TAX_RATE = 19.0; 
+
+        // Initial Data Structure for items
+        let items = [
+            { id: 1, description: '[AIO 5] HP EliteOne 800 G2 23 FHD All in One PC', quantity: 4.00, price: 65000.00 },
+            { id: 2, description: 'Ecran HP 22 Pouces', quantity: 2.00, price: 25000.00 },
+            { id: 3, description: 'Pack Clavier et souris sans fil Dell', quantity: 6.00, price: 4500.00 }
+        ];
+        let itemIdCounter = items.length + 1;
+
+        // Liste des IDs des champs de l'agence commerciale pour ajouter des écouteurs
+        const clientInputIds = ['client_name', 'agency_address', 'agency_rc', 'agency_art_fisc', 'agency_id_fisc'];
+
+
+        // --- Utility Functions ---
+
+        // Fonction pour formater les nombres en Dinars Algériens (DA)
+        const formatDA = (number) => {
+            return number.toLocaleString('fr-FR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        };
+
+        // --- Core Logic ---
+
+        // 1. Calculer les totaux de la facture
+        const calculateTotals = () => {
+            let totalHT = 0;
+            let totalTaxes = 0;
+
+            items.forEach(item => {
+                const quantity = parseFloat(item.quantity) || 0;
+                const price = parseFloat(item.price) || 0;
+                // Utilise le taux global de 19%
+                const taxesRate = GLOBAL_TAX_RATE; 
+
+                const montantHTLigne = quantity * price;
+                const taxeLigne = montantHTLigne * (taxesRate / 100);
+
+                totalHT += montantHTLigne;
+                totalTaxes += taxeLigne;
+            });
+
+            const totalTTC = totalHT + totalTaxes;
+
+            // Mettre à jour l'affichage
+            document.getElementById('total_ht').textContent = formatDA(totalHT) + ' DA';
+            document.getElementById('total_taxes').textContent = formatDA(totalTaxes) + ' DA';
+            document.getElementById('total_ttc').textContent = formatDA(totalTTC) + ' DA';
+            
+            // Conversion en lettres
+            document.getElementById('amount_in_words').textContent = numberToWordsFR(totalTTC) + ' EN TTC.';
+
+            // Mettre à jour les montants HT par ligne dans le tableau
+            items.forEach(item => {
+                const montantHTLigne = (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0);
+                const montantHTElement = document.getElementById(`montant-ht-${item.id}`);
+                if (montantHTElement) {
+                    montantHTElement.textContent = formatDA(montantHTLigne);
+                }
+            });
+        };
+        
+        // 2. Générer le HTML d'une ligne d'article
+        const createItemRow = (item) => {
+            const row = document.createElement('tr');
+            row.id = `item-row-${item.id}`;
+            row.className = 'hover:bg-gray-50';
+
+            const montantHTLigne = (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0);
+
+            row.innerHTML = `
+                <td class="px-2">
+                    <input type="text" class="text-input" value="${item.description}" data-field="description" data-id="${item.id}" placeholder="Désignation de l'article">
+                </td>
+                <td class="px-2 text-right">
+                    <input type="number" class="item-input" value="${item.quantity}" data-field="quantity" data-id="${item.id}" min="0" step="0.01">
+                </td>
+                <td class="px-2 text-right">
+                    <input type="number" class="item-input" value="${item.price}" data-field="price" data-id="${item.id}" min="0" step="0.01">
+                </td>
+                <td class="px-2 text-right font-semibold text-[#004a80]">
+                    <span id="montant-ht-${item.id}">${formatDA(montantHTLigne)}</span>
+                </td>
+                <td class="px-2 text-center no-print">
+                    <button onclick="deleteItem(${item.id})" class="text-red-500 hover:text-red-700 transition duration-150 p-1 rounded-full hover:bg-red-100" title="Supprimer la ligne">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </td>
+            `;
+
+            // Ajout des écouteurs d'événements à l'intérieur de la ligne
+            row.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', handleInputChange);
+            });
+
+            return row;
+        };
+
+        // 3. Afficher tous les articles
+        const renderItems = () => {
+            const itemListElement = document.getElementById('item_list');
+            itemListElement.innerHTML = '';
+            items.forEach(item => {
+                itemListElement.appendChild(createItemRow(item));
+            });
+            calculateTotals();
+        };
+
+        // 4. Gestionnaire d'entrée pour mettre à jour l'objet `items` et les champs statiques
+        const handleInputChange = (event) => {
+            const input = event.target;
+            
+            // Mise à jour de l'objet items pour les lignes de tableau
+            const id = parseInt(input.getAttribute('data-id'));
+            const field = input.getAttribute('data-field');
+            const itemIndex = items.findIndex(i => i.id === id);
+
+            if (itemIndex !== -1) {
+                // Pour les champs numériques, convertir la valeur et s'assurer qu'elle est valide
+                if (field === 'quantity' || field === 'price') {
+                    let value = parseFloat(input.value);
+                    if (isNaN(value) || value < 0) value = 0;
+                    items[itemIndex][field] = value;
+                } else {
+                    // Pour le champ texte
+                    items[itemIndex][field] = input.value;
+                }
+                
+            }
+            // Mise à jour de l'affichage du numéro de facture
+            if (input.id === 'invoice_number_value') {
+                 document.getElementById('invoice_number_display').textContent = `FACTURE PROFORMA N°: 2024/FAC${input.value.padStart(5, '0')}`;
+            }
+            
+            // Recalculer les totaux après chaque changement
+            calculateTotals();
+        };
+
+        // 5. Ajouter un nouvel article
+        const addItem = () => {
+            const newItem = {
+                id: itemIdCounter++,
+                description: 'Nouvel article',
+                quantity: 1.00,
+                price: 1000.00,
+            };
+            items.push(newItem);
+            renderItems();
+
+            const newRow = document.getElementById(`item-row-${newItem.id}`);
+            if(newRow) {
+                newRow.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                newRow.querySelector('input[data-field="description"]').focus();
+            }
+        };
+
+        // 6. Supprimer un article
+        const deleteItem = (id) => {
+            items = items.filter(item => item.id !== id);
+            renderItems();
+        };
+        
+        // 7. Initialisation de la page
+        const initializeApp = () => {
+            // Initialiser le numéro de facture et la date
+            const invoiceNumberInput = document.getElementById('invoice_number_value');
+            document.getElementById('invoice_number_display').textContent = `FACTURE PROFORMA N°: 2024/FAC${invoiceNumberInput.value.padStart(5, '0')}`;
+            
+            // Mettre la date d'aujourd'hui si le champ est vide
+            const dateInput = document.getElementById('invoice_date');
+            if (!dateInput.value) {
+                dateInput.value = new Date().toISOString().substring(0, 10); 
+            }
+
+            // Rendre les articles
+            renderItems();
+
+            // Attacher les écouteurs d'événements aux champs non-tableau
+            invoiceNumberInput.addEventListener('input', handleInputChange);
+            
+            // Attacher les écouteurs pour les champs du client
+            clientInputIds.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.addEventListener('input', handleInputChange);
+                }
+            });
+            
+            // Appeler calculateTotals une fois après avoir attaché les écouteurs
+            calculateTotals();
+        };
+
+        // Rendre les fonctions disponibles globalement (pour les onclick dans le HTML)
+        window.addItem = addItem;
+        window.deleteItem = deleteItem;
+        window.calculateTotals = calculateTotals; // Exposer pour debugging
+
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
 </html>
