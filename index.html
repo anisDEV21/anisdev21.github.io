@@ -3,33 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Générateur de Facture SOLUTION MAXI </title>
-    <!-- Chargement de Tailwind CSS --><script src="chch.js"></script>
+    <title>Générateur de Facture SOLUTION MAXI (Modifié)</title>
+    <!-- تحميل مكتبة Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Styles de base pour l'écran */
-        body { font-family: 'Inter', Calibri, Arial, sans-serif; background-color: #f4f7f9; font-size: 14px; }
+    /* الأنماط الأساسية للشاشة */
+        body { font-family: Calibri, Arial, sans-serif; background-color: #f4f7f9; font-size: 14px; }
         .invoice-container { 
-            max-width: 210mm;
-            width: 100%;
-            margin: 0 auto;
-            /* MIN-HEIGHT A ÉTÉ DÉPLACÉ DANS LE MEDIA PRINT */
-        }
-        
-        /* Ensure content fits within printable area */
-        @page {
-            margin: 1cm;
+            max-width: 210mm; 
+            /* تم نقل الحد الأدنى للارتفاع إلى أنماط الطباعة */
         }
         .invoice-header { border-bottom: 3px solid #f05a28; padding-bottom: 1rem; }
         
-        /* Styles des inputs interactifs (Écran) */
+    /* أنماط حقول الإدخال التفاعلية للشاشة */
         .item-input, .text-input {
             appearance: none;
             -moz-appearance: textfield;
-            border: 1px solid #d1d5db; /* Bordure visible pour l'édition */
+            border: 1px solid #d1d5db;
             padding: 4px;
             width: 100%;
             background-color: #ffffff;
+            min-height: 22px;
         }
         .item-input { text-align: right; }
         .text-input:focus, .item-input:focus {
@@ -37,162 +31,252 @@
             border-color: #004a80;
             background-color: #e6f0ff;
         }
+        
+        @media print {
+            .text-input {
+                display: block !important;
+                width: 100% !important;
+                min-height: 16px !important;
+                overflow: visible !important;
+                white-space: normal !important;
+                word-wrap: break-word !important;
+                font-size: 8pt !important;
+                line-height: 1.2 !important;
+            }
+        }
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
-        /* Styles de la table pour un rendu d'impression plus net */
+            /* أنماط الجدول للطباعة بشكل أوضح */
         #invoice_table {
-            width: 100%;
-            table-layout: fixed;
-            border-collapse: collapse;
-            page-break-inside: auto;
-            margin: 0;
-            padding: 0;
+            width: 100% !important;
+            table-layout: fixed !important;
+            border-collapse: collapse !important;
+            page-break-inside: avoid !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-size: 10pt !important;
+            font-family: Calibri !important;
         }
         #invoice_table tr {
-            page-break-inside: avoid;
-            page-break-after: auto;
+            page-break-inside: avoid !important;
+            page-break-after: avoid !important;
+            min-height: 24px !important;
         }
         #invoice_table th {
             background-color: #e5e7eb !important;
             color: #1f2937 !important;
-            border: 1px solid #d1d5db;
-            padding: 4px;
-            font-size: 10pt;
-            overflow-wrap: break-word;
-            word-wrap: break-word;
-            word-break: break-all;
+            border: 1px solid #d1d5db !important;
+            padding: 4px 6px !important;
+            font-size: 10pt !important;
+            font-weight: bold !important;
+            text-align: center !important;
+            vertical-align: middle !important;
+            white-space: nowrap !important;
+            font-family: Calibri !important;
         }
         #invoice_table td {
-            border: 1px solid #e5e7eb;
-            padding: 4px;
-            font-size: 10pt;
-            overflow-wrap: break-word;
-            word-wrap: break-word;
-            word-break: break-all;
-            white-space: normal;
-            min-height: 24px;
-            height: auto;
+            border: 1px solid #e5e7eb !important;
+            padding: 4px 6px !important;
+            font-size: 10pt !important;
+            min-height: 24px !important;
+            height: auto !important;
+            vertical-align: middle !important;
+            line-height: 1.3 !important;
+            font-family: Calibri !important;
         }
-        /* Column width management */
-        #invoice_table th:nth-child(1), #invoice_table td:nth-child(1) { /* Designation column */
-            width: 50%;
-            max-width: none;
-            text-align: left;
+        
+        /* تنسيق حقول الإدخال في الجدول */
+        #invoice_table input {
+            font-family: Calibri !important;
+            font-size: 8pt !important;
         }
-        #invoice_table th:nth-child(2), #invoice_table td:nth-child(2) { /* Quantity column */
-            width: 15%;
-            max-width: none;
-            text-align: center;
+        
+        /* تحديد عرض وتنسيق الأعمدة */
+        #invoice_table th:nth-child(1),
+        #invoice_table td:nth-child(1) {
+            width:65% !important; /* عمود اسم المنتج */
+            text-align: left !important;
+            padding-left: 8px !important;
         }
-        #invoice_table th:nth-child(3), #invoice_table td:nth-child(3) { /* Unit price column */
-            width: 15%;
-            max-width: none;
-            text-align: right;
+        #invoice_table th:nth-child(2),
+        #invoice_table td:nth-child(2) {
+            width: 8% !important; /* عمود الكمية */
+            text-align: center !important;
         }
-        #invoice_table th:nth-child(4), #invoice_table td:nth-child(4) { /* Total column */
-            width: 20%;
-            max-width: none;
-            text-align: right;
+        #invoice_table th:nth-child(3),
+        #invoice_table td:nth-child(3) {
+            width: 12% !important; /* عمود السعر للوحدة */
+            text-align: right !important;
+            padding-right: 8px !important;
         }
-
-        @media print {
-            #invoice_table td, #invoice_table th {
-                font-size: 9pt !important;
-                padding: 2px 4px !important;
-                line-height: 1.2 !important;
-            }
-            #invoice_table td:nth-child(1) {
-                font-size: 9pt !important;
-                word-break: break-all !important;
-                white-space: normal !important;
-                overflow: visible !important;
-                min-height: auto !important;
-            }
-            table {
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
+        #invoice_table th:nth-child(4),
+        #invoice_table td:nth-child(4) {
+            width: 15% !important; /* عمود المجموع */
+            text-align: right !important;
+            padding-right: 8px !important;
+        }
+        
+        /* تنسيق حقول الإدخال في الجدول */
+        #invoice_table td input {
+            width: 100% !important;
+            min-height: 24px !important;
+            padding: 4px 6px !important;
         }
 
-        /* Réduction de l'espacement des totaux */
+    /* تنسيق النصوص داخل الجدول */
+        #invoice_table td input {
+            font-size: 10pt !important;
+            padding: 2px 4px !important;
+            text-align: inherit !important;
+            width: 100% !important;
+        }
+        
+    /* تحسين عرض الأرقام داخل الجدول */
+        #invoice_table td:nth-child(2) input,
+        #invoice_table td:nth-child(3) input,
+        #invoice_table td:nth-child(4) input {
+            font-family: 'Courier New', monospace !important;
+            direction: ltr !important;
+        }
+
+    /* تقليل المسافة بين صفوف المجاميع */
         .summary-row {
-            padding-top: 4px;
-            padding-bottom: 4px;
+            padding-top: 2px;
+            padding-bottom: 2spx;
         }
         .summary-row-ttc {
-            padding-top: 8px;
-            padding-bottom: 8px;
+            padding-top: 2px;
+            padding-bottom: 2px;
         }
 
 
-        /* Styles spécifiques pour l'impression (mode noir et blanc, 11pt, masquage des éléments interactifs) */
+    /* أنماط خاصة بالطباعة: أبيض وأسود، حجم خط 11pt، إخفاء العناصر التفاعلية */
+        @page {
+            size: A4;
+            margin: 1cm 0.5cm;
+        }
+
         @media print {
-            /* Styles généraux du document */
-            @page {
-                size: A4;
-                margin: 0.5cm;
-            }
+            /* الأنماط العامة للمستند عند الطباعة */
             body { 
                 background-color: white !important;
-                font-size: 11pt !important;
-                font-family: Calibri, Arial, sans-serif !important;
+                font-size: 9pt !important;
+                font-family: Calibri !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                position: relative !important;
+                height: 100% !important;
             }
             .invoice-container {
-                width: 100% !important;
-                max-width: none !important;
                 box-shadow: none !important;
                 border: none !important;
                 padding: 0.5cm !important;
                 margin: 0 !important;
-                display: block !important;
-                page-break-after: always;
+                width: 100% !important;
+                max-width: none !important;
+                position: relative !important;
+                min-height: calc(100vh - 2cm) !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+            
+            /* تنظيم محتوى الفاتورة */
+            .invoice-content {
+                flex: 1 0 auto !important;
+            }
+            
+            /* تثبيت معلومات التواصل في أسفل الصفحة عند الطباعة */
+            #invoice-footer {
+                position: fixed !important;
+                bottom: 0.5cm !important;
+                left: 0.5cm !important;
+                right: 0.5cm !important;
+                padding-top: 0.2cm !important;
+                border-top: 1px solid #ccc !important;
+                background-color: white !important;
+                font-size: 7pt !important;
             }
 
-            /* MASQUER TOUT CE QUI EST INTERACTIF/NON-FINAL */
+            /* إخفاء جميع العناصر التفاعلية أو غير النهائية عند الطباعة */
             .no-print, #item_list .no-print {
                 display: none !important;
             }
-            /* Rendre les inputs transparents et statiques */
+            /* جعل حقول الإدخال شفافة وغير قابلة للتعديل عند الطباعة */
             .text-input, .item-input {
                 border: none !important;
                 background-color: transparent !important;
                 padding: 0 !important;
                 display: inline-block;
                 width: auto !important;
+                font-family: Calibri !important;
             }
             .text-input { text-align: left !important; }
 
-            /* GESTION DES COULEURS POUR LE NOIR ET BLANC */
-            .invoice-header { border-bottom: 3px solid black !important; }
-            #total_ttc_box { background-color: #cccccc !important; color: black !important; border: 1px solid black !important; }
+            /* إدارة الألوان وأحجام الخطوط للطباعة */
+            .invoice-header { 
+                border-bottom: 2px solid black !important;
+                margin-bottom: 0.3cm !important;
+            }
+            #total_ttc_box { 
+                background-color: #cccccc !important; 
+                color: black !important; 
+                border: 1px solid black !important;
+                padding: 2px 4px !important;
+                font-size: 9pt !important;
+            }
             .bg-gray-100 { background-color: #f0f0f0 !important; }
+            
+            /* تعديل أحجام الخطوط للعناوين والنصوص */
+            .text-xl { font-size: 11pt !important; }
+            .text-2xl { font-size: 12pt !important; }
+            .text-sm { font-size: 9pt !important; }
+            .text-xs { font-size: 8pt !important; }
+            
+            /* تنسيق المسافات */
+            .p-6, .p-4, .p-8 { padding: 0.2cm !important; }
+            .mb-6, .mb-4 { margin-bottom: 0.2cm !important; }
+            
+            /* تصحيح ألوان النصوص للطباعة */
             .text-orange { color: black !important; }
             .text-blue { color: #333333 !important; }
             
-            /* S'assurer que les valeurs calculées restent affichées */
-            #invoice_table td span { display: block !important; }
+            /* التأكد من ظهور القيم المحسوبة بشكل صحيح */
+            #invoice_table td span { 
+                display: inline-block !important;
+                white-space: normal !important;
+            }
 
-            /* Réduction de l'espacement pour l'impression */
+            /* تقليل المسافات الداخلية للخلايا عند الطباعة */
             #invoice_table td, #invoice_table th {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-            }
-            .summary-row, .summary-row-ttc {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-            }
-            .summary-row-ttc {
-                padding-top: 4px !important;
-                padding-bottom: 4px !important;
+                padding: 0px 0px !important;
             }
             
-            /* S'assurer que le pied de page est poussé au fond (important pour le flexbox) */
+            /* تنسيق صفوف المجاميع النهائية */
+            .summary-row, .summary-row-ttc {
+                padding: 2px 4px !important;
+                page-break-inside: avoid !important;
+            }
+            
+            /* منع تقسيم العناصر المهمة بين الصفحات عند الطباعة */
+            .invoice-header,
+            #invoice_table,
+            .summary-row,
+            .summary-row-ttc,
             #invoice-footer {
-                margin-top: auto !important; /* Pousse le footer vers le bas */
+                page-break-inside: avoid !important;
+            }
+            
+            /* تنسيق تذييل الصفحة للطباعة */
+            #invoice-footer {
+                margin-top: 0.3cm !important;
+                padding-top: 0.2cm !important;
+            }
+            
+            /* تحسين وضوح النصوص في الطباعة */
+            input, .text-input {
+                font-size: 9pt !important;
+                line-height: 1.2 !important;
             }
 
         }
@@ -200,10 +284,10 @@
 </head>
 <body class="p-4 sm:p-8">
 
-    <!-- Le conteneur parent 'invoice-container' est maintenant un flexbox en mode print -->
+    <!-- الحاوية الرئيسية `invoice-container` أصبحت flexbox في وضع الطباعة -->
     <div id="app" class="invoice-container bg-white shadow-xl mx-auto p-6 md:p-10 rounded-lg">
 
-        <!-- L'en-tête de la Facture -->
+    <!-- ترويسة الفاتورة -->
         <header class="invoice-header flex flex-col sm:flex-row justify-between items-start mb-6">
             <!-- Informations du Vendeur (SOLUTION MAXI) - Toujours à gauche -->
             <div class="w-full sm:w-1/2 mb-4 sm:mb-0 text-sm">
@@ -213,17 +297,17 @@
                 <p class="text-xs text-gray-700">NIS : 19802401057835 | A.I : 23235186571</p>
             </div>
 
-            <!-- Bloc du Logo (Maintenant à droite) -->
+            <!-- كتلة الشعار (الآن على اليمين) -->
             <div class="w-full sm:w-1/2 text-left sm:text-right text-sm">
                 <!-- URL d'image de placeholder pour éviter une erreur 404 si logo.jpg n'existe pas -->
-                <img src="https://placehold.co/240x60/f05a28/ffffff?text=SOLUTION+MAXI" 
-                     alt="SOLUTION MAXI Logo" 
-                     class="w-60 h-auto ml-auto"
-                     onerror="this.onerror=null;this.src='https://placehold.co/240x60/004a80/ffffff?text=SOLUTION+MAXI+LOGO';"> 
+                <img src="logo.jpg" 
+                     class="w-32 h-auto ml-auto" 
+                     style="max-width: 50%; object-fit: contain;"
+                     onerror="this.onerror=null;this.src='https://placehold.co/120x30/004a80/ffffff?text=SOLUTION+MAXI+LOGO';"> 
             </div>
         </header>
 
-        <!-- NOUVEAU BLOC: TITRE DE LA FACTURE (Centré) -->
+    <!-- كتلة جديدة: عنوان الفاتورة (مركزي) -->
         <div class="text-center mb-6">
             <h2 class="text-2xl font-extrabold text-[#004a80] uppercase">
                 <span id="invoice_number_display">FACTURE PROFORMA N°: 2024/FAC00001</span>
@@ -231,12 +315,12 @@
             </h2>
         </div>
         
-        <!-- Infos Client et Agence Commerciale (SOUS le titre) -->
+    <!-- معلومات الزبون والوكالة التجارية (تحت العنوان) -->
         <div class="mb-4 text-sm flex justify-between items-start">
             
-            <!-- Partie Gauche (Client) - Élargie à 2/3 -->
+            <!-- الجزء الأيسر (الزبون) - مُوسع إلى 2/3 -->
             <div class="w-2/3 text-left">
-                <!-- Bloc "Doit à" (Client) en haut à gauche -->
+                <!-- كتلة "مدين إلى" (الزبون) أعلى يسار -->
                 <div class="mb-2">
                     <p class="text-sm font-semibold">
                         Doit à: <input type="text" class="text-input inline w-full font-extrabold text-left" id="client_name" placeholder="Nom du Client">
@@ -250,16 +334,16 @@
                 </div>
             </div>
 
-            <!-- Partie Droite (Infos Date/Ref) - Réduite à 1/3 -->
+            <!-- الجزء الأيمن (تاريخ/مرجع) - مُقلص إلى 1/3 -->
             <div class="w-1/3 text-right pt-2">
-                <!-- Date alignée à droite sous le titre central -->
+                <!-- التاريخ محاذى لليمين تحت العنوان المركزي -->
                 <p class="text-sm font-semibold mb-2">
                     Le: <input type="date" class="text-input inline w-36 font-medium text-right" id="invoice_date" value="2024-01-02">
                 </p>
             </div>
         </div>
 
-        <!-- Tableau des Articles -->
+    <!-- جدول المواد -->
         <div class="overflow-x-auto shadow-md rounded-lg">
             <table id="invoice_table" class="min-w-full text-xs">
                 <thead class="bg-gray-100 text-gray-600 uppercase tracking-wider">
@@ -272,12 +356,12 @@
                     </tr>
                 </thead>
                 <tbody id="item_list" class="bg-white divide-y divide-gray-200">
-                    <!-- Les lignes seront insérées ici par JS -->
+                    <!-- سيتم إدراج الأسطر هنا بواسطة JavaScript -->
                 </tbody>
             </table>
         </div>
 
-        <!-- Boutons interactifs (Masqués à l'impression) -->
+    <!-- أزرار تفاعلية (مخفية عند الطباعة) -->
         <div class="mt-4 flex justify-between items-center no-print">
             <button onclick="addItem()" class="bg-[#004a80] hover:bg-[#003c66] text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md">
                 + Ajouter une ligne
@@ -289,21 +373,21 @@
         </div>
 
 
-        <!-- Résumé des Totaux et Total Général (Espacement réduit) -->
+    <!-- ملخص المجاميع والمجموع العام (مسافة مُقللة) -->
         <div class="flex justify-end mt-8">
             <div class="w-full sm:w-96">
                 <div class="space-y-1 text-sm">
-                    <!-- Total HT -->
+                    <!-- إجمالي قبل الضريبة -->
                     <div class="flex justify-between items-center summary-row px-3 bg-gray-100 rounded-md">
                         <span class="font-medium text-gray-700">Total HT</span>
                         <span id="total_ht" class="font-bold text-gray-900">0,00 DA</span>
                     </div>
-                    <!-- Total Taxes -->
+                    <!-- إجمالي الضرائب -->
                     <div class="flex justify-between items-center summary-row px-3 bg-gray-100 rounded-md">
                         <span class="font-medium text-gray-700">TVA (19%)</span>
                         <span id="total_taxes" class="font-bold text-gray-900">0,00 DA</span>
                     </div>
-                    <!-- Total TTC -->
+                    <!-- الإجمالي شامل الضريبة -->
                     <div class="flex justify-between items-center summary-row-ttc px-3 bg-[#f05a28] text-white rounded-md shadow-lg" id="total_ttc_box">
                         <span class="text-base font-bold">Total TTC</span>
                         <span id="total_ttc" class="text-base font-extrabold">0,00 DA</span>
@@ -312,21 +396,21 @@
             </div>
         </div>
 
-        <!-- Montant en lettres -->
+    <!-- المبلغ كتابة بالحروف -->
         <p class="mt-8 text-sm font-semibold text-gray-800 border-t pt-4">
             Arrêtée la présente facture proforma à la somme de: <span id="amount_in_words" class="text-[#004a80] font-extrabold">ZÉRO DINARS ALGÉRIENS EN TTC.</span>
         </p>
         
-        <!-- Signature Placeholder -->
+    <!-- مساحة للتوقيع -->
         <div class="mt-12 text-right">
             <p class="text-sm font-semibold">Le gérant,</p>
             <div class="mt-8 h-20">
-                <!-- Espace pour le cachet/signature à l'impression -->
+                <!-- مساحة للختم/التوقيع عند الطباعة -->
             </div>
         </div>
 
 
-        <!-- Pied de page - AJOUT DE L'ID pour le ciblage CSS d'impression -->
+    <!-- تذييل الصفحة - إضافة معرف لاستهدافه في CSS الخاص بالطباعة -->
         <footer id="invoice-footer" class="mt-12 text-center text-xs text-gray-500 pt-4 border-t border-gray-300">
             <p>Mobile: 0550 36 30 36 - 0550 36 20 36 | Courriel: solutionmaxi@gmail.com | Site: www.solutionmaxi.com</p>
             <p class="mt-1">N° Cpt bancaire : 00300748102504300059 BADR AGENCE EL HARROUCH</p>
@@ -336,7 +420,7 @@
     </div>
 
     <script>
-        // --- Conversion en Lettres (Fonction plus complète) ---
+    // --- تحويل الأرقام إلى كلمات (دالة محسنة) ---
         const numberToWordsFR = (n) => {
             const units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf'];
             const teens = ['dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
@@ -414,10 +498,10 @@
         };
 
 
-        // Taux de TVA fixe puisque la colonne taxe est retirée du tableau
+    // معدل TVA ثابت لأن عمود الضريبة أُزيل من الجدول
         const GLOBAL_TAX_RATE = 19.0; 
 
-        // Initial Data Structure for items
+    // هيكل البيانات الابتدائي للعناصر
         let items = [
             { id: 1, description: '[AIO 5] HP EliteOne 800 G2 23 FHD All in One PC', quantity: 4.00, price: 65000.00 },
             { id: 2, description: 'Ecran HP 22 Pouces', quantity: 2.00, price: 25000.00 },
@@ -425,13 +509,13 @@
         ];
         let itemIdCounter = items.length + 1;
 
-        // Liste des IDs des champs de l'agence commerciale pour ajouter des écouteurs
+    // قائمة معرفات حقول الوكالة لإضافة مستمعي الأحداث
         const clientInputIds = ['client_name', 'agency_address', 'agency_rc', 'agency_art_fisc', 'agency_id_fisc'];
 
 
-        // --- Utility Functions ---
+    // --- دوال مساعدة ---
 
-        // Fonction pour formater les nombres en Dinars Algériens (DA)
+    // دالة لتنسيق الأرقام بالدينار الجزائري (DA)
         const formatDA = (number) => {
             return number.toLocaleString('fr-FR', {
                 minimumFractionDigits: 2,
@@ -439,9 +523,9 @@
             });
         };
 
-        // --- Core Logic ---
+    // --- المنطق الرئيسي ---
 
-        // 1. Calculer les totaux de la facture
+    // 1. حساب مجاميع الفاتورة
         const calculateTotals = () => {
             let totalHT = 0;
             let totalTaxes = 0;
@@ -479,7 +563,7 @@
             });
         };
         
-        // 2. Générer le HTML d'une ligne d'article
+    // 2. إنشاء HTML لسطر مادة
         const createItemRow = (item) => {
             const row = document.createElement('tr');
             row.id = `item-row-${item.id}`;
@@ -507,7 +591,7 @@
                 </td>
             `;
 
-            // Ajout des écouteurs d'événements à l'intérieur de la ligne
+            // إضافة مستمعي الأحداث داخل السطر
             row.querySelectorAll('input').forEach(input => {
                 input.addEventListener('input', handleInputChange);
             });
@@ -515,7 +599,7 @@
             return row;
         };
 
-        // 3. Afficher tous les articles
+    // 3. عرض جميع المواد
         const renderItems = () => {
             const itemListElement = document.getElementById('item_list');
             itemListElement.innerHTML = '';
@@ -525,7 +609,7 @@
             calculateTotals();
         };
 
-        // 4. Gestionnaire d'entrée pour mettre à jour l'objet `items` et les champs statiques
+    // 4. مُعالج الإدخال لتحديث كائن `items` والحقول الثابتة
         const handleInputChange = (event) => {
             const input = event.target;
             
@@ -555,7 +639,7 @@
             calculateTotals();
         };
 
-        // 5. Ajouter un nouvel article
+    // 5. إضافة مادة جديدة
         const addItem = () => {
             const newItem = {
                 id: itemIdCounter++,
@@ -573,31 +657,31 @@
             }
         };
 
-        // 6. Supprimer un article
+    // 6. حذف مادة
         const deleteItem = (id) => {
             items = items.filter(item => item.id !== id);
             renderItems();
         };
         
-        // 7. Initialisation de la page
+    // 7. تهيئة الصفحة
         const initializeApp = () => {
-            // Initialiser le numéro de facture et la date
+            // تهيئة رقم الفاتورة والتاريخ
             const invoiceNumberInput = document.getElementById('invoice_number_value');
             document.getElementById('invoice_number_display').textContent = `FACTURE PROFORMA N°: 2024/FAC${invoiceNumberInput.value.padStart(5, '0')}`;
             
-            // Mettre la date d'aujourd'hui si le champ est vide
+            // وضع تاريخ اليوم إذا كان الحقل فارغًا
             const dateInput = document.getElementById('invoice_date');
             if (!dateInput.value) {
                 dateInput.value = new Date().toISOString().substring(0, 10); 
             }
 
-            // Rendre les articles
+            // عرض المواد
             renderItems();
 
-            // Attacher les écouteurs d'événements aux champs non-tableau
+            // ربط مستمعي الأحداث بالحقول خارج الجدول
             invoiceNumberInput.addEventListener('input', handleInputChange);
             
-            // Attacher les écouteurs pour les champs du client
+            // ربط مستمعي الأحداث لحقول الزبون
             clientInputIds.forEach(id => {
                 const input = document.getElementById(id);
                 if (input) {
@@ -605,11 +689,11 @@
                 }
             });
             
-            // Appeler calculateTotals une fois après avoir attaché les écouteurs
+            // استدعاء calculateTotals مرة بعد ربط المستمعين
             calculateTotals();
         };
 
-        // Rendre les fonctions disponibles globalement (pour les onclick dans le HTML)
+    // جعل الدوال متاحة عالمياً (لاستخدام onclick في HTML)
         window.addItem = addItem;
         window.deleteItem = deleteItem;
         window.calculateTotals = calculateTotals; // Exposer pour debugging
